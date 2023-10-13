@@ -1,0 +1,22 @@
+{
+	"configPath": ".prettierrc.json",
+	"embeddedLanguageFormatting": "auto",
+	"endOfLine": "lf",
+	"htmlWhitespaceSensitivity": "strict",
+	"ignorePath": ".prettierignore",
+	"insertPragma": false,
+	"jsxSingleQuote": true,
+	"printWidth": 80,
+	"proseWrap": "preserve",
+	"quoteProps": "as-needed",
+	"requirePragma": false,
+	"resolveGlobalModules": false,
+	"semi": false,
+	"singleAttributePerLine": false,
+	"singleQuote": true,
+	"tabWidth": 2,
+	"trailingComma": "es5",
+	"useEditorConfig": true,
+	"useTabs": true,
+	"vueIndentScriptAndStyle": false
+}
