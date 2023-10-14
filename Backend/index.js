@@ -35,3 +35,5 @@ connection.on('error', (error) => console.log(error, 'error error error'))
 app.listen(PORT, function () {
 	console.log('Server is running on Port: ' + PORT)
 })
+
+app.use('/', router)
