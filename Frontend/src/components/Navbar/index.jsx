@@ -1,19 +1,29 @@
 import { Button } from 'primereact/button'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 import './Navbar.css'
 import companyLogo from '../../assets/cadmus_logo_webpage.png'
 import useMetaConnector from '../MetamaskLogin'
 import { useWallet } from '../../services/context/WalletContext'
+import Api from '../../services/Api'
 
 const Navbar = () => {
 	const [menuVisible, setMenuVisible] = useState(false)
 	const { connectToMeta } = useMetaConnector()
-	const { walletAddress } = useWallet()
+	const { setWalletAddress, walletAddress } = useWallet()
 
 	const handleConnectToMeta = async () => {
-		const signer = await connectToMeta()
+		if (!walletAddress) {
+			const signer = await connectToMeta()
+		} else {
+			const res = await Api.get('/user/logout')
+
+			if (res.data.success) {
+				console.log('user signed out')
+				setWalletAddress(null)
+			}
+		}
 	}
 
 	return (
@@ -52,7 +62,7 @@ const Navbar = () => {
 								<Button
 									label={
 										walletAddress
-											? walletAddress.slice(0, 15) + '...'
+											? walletAddress.slice(0, 5) + '...' + '| Log out'
 											: `Connect`
 									}
 									className='btn btn-primary p-button-sm'

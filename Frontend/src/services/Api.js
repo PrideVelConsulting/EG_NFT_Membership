@@ -11,6 +11,7 @@ class ApiService {
 	constructor() {
 		const service = axios.create({
 			baseURL: this._endpoints.BASE_URL,
+			withCredentials: true,
 		})
 
 		service.interceptors.response.use(this.handleSuccess, this.handleError)

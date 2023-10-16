@@ -16,14 +16,12 @@ const useMetaConnector = () => {
 			console.log(networkVersion)
 
 			if (networkVersion !== '5001') {
-				// If not, prompt the user to switch to the Polygon network
 				try {
 					await window.ethereum.request({
 						method: 'wallet_switchEthereumChain',
-						params: [{ chainId: '0x1389' }], // 0x89 is the chainId for Polygon
+						params: [{ chainId: '0x1389' }],
 					})
 				} catch (switchError) {
-					// If the Polygon network hasn't been added to the user's MetaMask wallet, add it
 					if (switchError.code === 4902) {
 						try {
 							await window.ethereum.request({
@@ -49,12 +47,6 @@ const useMetaConnector = () => {
 				}
 			}
 
-			const accounts = await window.ethereum.request({ method: 'eth_accounts' })
-			// if (accounts.length > 0) {
-			//   provider = new ethers.BrowserProvider(window.ethereum)
-			//   setWalletAddress(accounts[0].toLowerCase())
-			//   return accounts[0].toLowerCase()
-			// } else {
 			provider = new ethers.BrowserProvider(window.ethereum)
 			signer = await provider.getSigner()
 
@@ -71,7 +63,6 @@ const useMetaConnector = () => {
 					console.log(error)
 				}
 			}
-			// }
 		}
 	}
 
