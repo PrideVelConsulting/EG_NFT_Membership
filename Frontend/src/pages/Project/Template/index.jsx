@@ -1,14 +1,12 @@
-import React from 'react'
-import { InputText } from 'primereact/inputtext'
-import SyntaxHighlighter from 'react-syntax-highlighter'
-import { Button } from 'primereact/button'
+import OpenSeaCom from './components/OpenSeaCom' // Import the Custom component
 
-function index() {
+const Metadata = ({ setStep, setProject, project }) => {
 	return (
-		<center>
-			<h1>THIS IS Template TAB</h1>
-		</center>
+		<div className='mt-3'>
+			<h2>Mantle Metadata</h2>
+			<OpenSeaCom project={project} setStep={setStep} setProject={setProject} />
+		</div>
 	)
 }
 
-export default index
+export default Metadata

@@ -42,9 +42,30 @@ async function getProjectById(req, res) {
 		res.status(500).json({ error: 'An error occurred.' })
 	}
 }
+async function updateProject(req, res) {
+	try {
+		console.log(req.body)
+		const updatedProject = await Project.findByIdAndUpdate(
+			req.params.id,
+			req.body,
+			{
+				new: true, // Return the updated project after update
+			}
+		)
+
+		if (!updatedProject) {
+			return res.status(404).json({ error: 'Project not found.' })
+		}
+
+		res.status(200).json(updatedProject)
+	} catch (error) {
+		res.status(400).json({ error: error.message })
+	}
+}
 
 module.exports = {
 	createProject,
 	getProjects,
 	getProjectById,
+	updateProject
 }
