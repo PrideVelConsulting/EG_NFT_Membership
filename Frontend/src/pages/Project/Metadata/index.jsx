@@ -14,7 +14,7 @@ const options = [
 	{ description: 'description' },
 ]
 
-function index({ setStep, project, setProject }) {
+function Metadata({ setStep, project, setProject }) {
 	const toast = useToast()
 	const [tableData, setTableData] = useState([])
 	const [Mantle, setMantle] = useState([[], []]) // [[FIELDs],[Attributes]]
@@ -60,26 +60,19 @@ function index({ setStep, project, setProject }) {
 				closeWarnModal()
 			}
 
-			await uploadCSVData(project, tableData, toast, setCsvIssues, isWarnSave)
-			const payload = {
-				projectId: project._id,
-				n: tableData.length,
-				isDeployed: project.isDeployed,
-				stepCompleted: [true, true, true, true, false],
-			}
-			if (project.finalCIDR) {
-				payload.existingFolderHash = project.finalCIDR
-			}
-			const res = await ApiService.post(`/project_metadata/generate`, payload)
+			const returnedData = await uploadCSVData(
+				project,
+				tableData,
+				toast,
+				setCsvIssues,
+				isWarnSave
+			)
+
 			setProject({
-				metadataTab: {
-					standard: project?.metadataTab?.standard,
-					csvUpload: true,
-				},
 				configurationTab: {},
 				isUploadedToIPFS: true,
 				NftOnIpfsUpload: tableData.length,
-				finalCIDR: res.data.message,
+				finalCIDR: returnedData.finalCIDR,
 				stepCompleted: [true, true, true],
 			})
 			setTableData([])
@@ -120,7 +113,7 @@ function index({ setStep, project, setProject }) {
 						<div className='text-md'>{csvIssues?.warnings?.length || 0}</div>
 					</div>
 					<div
-						className='panel-color theme-border-color border-1 px-1 text-center border-round-sm flex align-items-center gap-1 w-min'
+						className='panel-color theme-border-color border-1 p-1 text-center border-round-sm flex align-items-center gap-1 w-min'
 						onClick={() => {
 							if (csvIssues?.errors?.length > 0) return openErrModal()
 						}}
@@ -190,12 +183,12 @@ function index({ setStep, project, setProject }) {
 	)
 }
 
-export default index
+export default Metadata
 
 const ChipsComponent = ({ chips }) => {
 	const com = (chip) => {
 		return (
-			<div className='flex align-items-center gap-2 py-1'>
+			<div className='flex align-items-center py-2'>
 				<div className='overflow-hidden'>{chip}</div>
 			</div>
 		)
@@ -204,7 +197,7 @@ const ChipsComponent = ({ chips }) => {
 		<div className='p-d-flex p-flex-wrap border-1 theme-border-color overflow-auto border-round p-2'>
 			{chips.map((arr) =>
 				arr.map((chip) => (
-					<Chip className='p-button-sm' key={chip} template={() => com(chip)} />
+					<Chip className='mr-1' key={chip} template={() => com(chip)} />
 				))
 			)}
 		</div>
@@ -237,12 +230,28 @@ const uploadCSVData = async (
 			response = await ApiService.uploadCSV(`/project_metadata/csv`, file, {
 				schema: JSON.stringify(project?.metadataSchema),
 			})
+		}
+
+		const payload = {
+			projectId: project._id,
+			n: csvData.length,
+			isDeployed: project.isDeployed,
+			stepCompleted: [true, true, true],
+		}
+		if (project.finalCIDR) {
+			payload.existingFolderHash = project.finalCIDR
+		}
+		const res = await ApiService.post(`/project_metadata/generate`, payload)
+		if (res.status === 200 || res.status === 201) {
 			await ApiService.put(`/project/${project._id}`, {
-				isUploadedToIPFS: false,
-				NftOnIpfsUpload: 0,
+				isUploadedToIPFS: true,
+				NftOnIpfsUpload: csvData.length,
 				configurationTab: {},
-				stepCompleted: [true, true, true, false, false],
+				stepCompleted: [true, true, true],
+				finalCIDR: res.data.message,
 			})
+		} else {
+			throw error
 		}
 		const { status, data } = response
 		if (status === 201) {
@@ -256,12 +265,13 @@ const uploadCSVData = async (
 			}
 		}
 		if (status === 200) {
-			return
+			return { finalCIDR: res.data.message }
 		} else {
 			throw new Error('Failed to save CSV data to DB')
 		}
 	} catch (error) {
 		console.error('Error while uploading CSV:', error)
+
 		throw error
 	}
 }

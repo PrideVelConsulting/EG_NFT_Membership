@@ -28,15 +28,11 @@ const Project = () => {
 		0: true,
 		1: false,
 		2: false,
-		3: false,
-		4: false,
 	})
 	const errors = [
 		"YOu'll never see this error",
 		'Save a valid template first',
 		'Upload the CSV file first',
-		'Upload the metadata to IPFS first',
-		'Generate the contract file first',
 	]
 	const selectTab = (index) => {
 		if (visited[index] && project?.stepCompleted[index]) {
@@ -63,7 +59,7 @@ const Project = () => {
 			const curr = window.location.href
 			const newURL = curr.replace(/-(.*)$/, '-' + value)
 			const data = {
-				ProjectName: value,
+				projectName: value,
 			}
 			const res = await Api.put(
 				`/project/${collectionName.split('-')[0]}`,
@@ -86,7 +82,6 @@ const Project = () => {
 	}
 
 	useEffect(() => {
-		console.log('🚀 ~ file: index.jsx:90 ~ useEffect ~ project:', project)
 		if (project?.metadataSchema && project?.stepCompleted[1]) {
 			setVisited((prev) => {
 				prev[1] = true
@@ -94,28 +89,12 @@ const Project = () => {
 			})
 			setActiveIndex(1)
 		}
-
-		if (project?.metadataTab?.csvUpload && project?.stepCompleted[2]) {
+		if (project?.NftOnIpfsUpload > 0 && project?.stepCompleted[2]) {
 			setVisited((prev) => {
 				prev[2] = true
 				return { ...prev }
 			})
 			setActiveIndex(2)
-		}
-
-		if (project?.NftOnIpfsUpload > 0 && project?.stepCompleted[3]) {
-			setVisited((prev) => {
-				prev[3] = true
-				return { ...prev }
-			})
-			setActiveIndex(3)
-		}
-		if (project?.configurationTab && project?.stepCompleted[4]) {
-			setVisited((prev) => {
-				prev[4] = true
-				return { ...prev }
-			})
-			setActiveIndex(4)
 		}
 	}, [project])
 
@@ -157,14 +136,16 @@ const Project = () => {
 						)}
 					</div>
 
-					<div className='mb-8'>
-						<Steps
-							model={items}
-							activeIndex={activeIndex}
-							onSelect={(e) => setActiveIndex(e.index)} //plz do not remove it
-							// onSelect={(e) => selectTab(e.index)} // plz do not remove it
-							readOnly={false}
-						/>
+					<div className='mb-8 w-full lg:flex justify-content-center'>
+						<div className='lg:w-8 text-center'>
+							<Steps
+								model={items}
+								activeIndex={activeIndex}
+								//onSelect={(e) => setActiveIndex(e.index)} //plz do not remove it
+								// onSelect={(e) => selectTab(e.index)} // plz do not remove it
+								readOnly={false}
+							/>
+						</div>
 					</div>
 
 					{activeIndex === 0 && (
@@ -192,24 +173,26 @@ const Project = () => {
 
 					<div className='flex justify-content-between mt-5'>
 						<div>
-							<Button
-								label='Back'
-								className='p-button-sm custom-btn'
-								icon='pi pi-chevron-left'
-								iconPos='left'
-								disabled={activeIndex === 0}
-								onClick={() => selectTab(activeIndex - 1)}
-							/>
+							{activeIndex === 0 || (
+								<Button
+									label='Back'
+									className='p-button-sm custom-btn'
+									icon='pi pi-chevron-left'
+									iconPos='left'
+									onClick={() => selectTab(activeIndex - 1)}
+								/>
+							)}
 						</div>
 						<div>
-							<Button
-								label='Next'
-								className='p-button-sm custom-btn'
-								icon='pi pi-chevron-right'
-								iconPos='right'
-								disabled={activeIndex === 2}
-								onClick={() => selectTab(activeIndex + 1)}
-							/>
+							{activeIndex === 2 || (
+								<Button
+									label='Next'
+									className='p-button-sm custom-btn'
+									icon='pi pi-chevron-right'
+									iconPos='right'
+									onClick={() => selectTab(activeIndex + 1)}
+								/>
+							)}
 						</div>
 					</div>
 				</div>
@@ -222,12 +205,12 @@ export default Project
 
 const items = [
 	{
-		label: 'Template',
+		label: 'Download Template',
 	},
 	{
-		label: 'Metadata',
+		label: 'Upload Metadata',
 	},
 	{
-		label: 'Configuration',
+		label: 'Deploy Contract',
 	},
 ]

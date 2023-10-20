@@ -6,12 +6,13 @@ import 'primeflex/primeflex.css'
 import { Suspense } from 'react'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer/Footer'
+import Comingsoon from '../../../../Customer_UI/src/pages/Comingsoon'
 
 function Layout() {
 	return (
 		<div className=' w-full m-0 p-0'>
 			<Navbar />
-			<div>
+			<div className='content'>
 				<div>
 					<Suspense>
 						<Outlet />

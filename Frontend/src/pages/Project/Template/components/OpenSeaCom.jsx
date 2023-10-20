@@ -66,7 +66,7 @@ function OpenSeaCom({ setStep, setProject, project }) {
 			</div>
 			<div className='flex gap-2 mt-4'>
 				<Button
-					label='Properties'
+					label='Custom Properties'
 					className='my-2 p-button-sm '
 					icon='pi pi-plus'
 					iconPos='right'
@@ -130,14 +130,16 @@ const options = [
 const ChipsComponent = ({ chips, onRemove }) => {
 	const com = (chip) => {
 		return (
-			<div className='flex align-items-center gap-2 py-1'>
-				<div className='overflow-hidden'>{chip}</div>
+			<div className='flex align-items-center gap-2 py-2'>
+				<div className='overflow-hidden'>
+					{chip.charAt(0).toUpperCase() + chip.slice(1)}
+				</div>
 				<i className='pi pi-trash' onClick={() => onRemove(chip)}></i>
 			</div>
 		)
 	}
 	return (
-		<div className='p-d-flex p-flex-wrap border-1 theme-border-color overflow-auto border-round p-2'>
+		<div className='p-d-flex p-flex-wrap border-1 theme-border-color overflow-auto border-round p-2 '>
 			{chips.map(
 				(obj, index) =>
 					Object.keys(obj).length > 0 &&
@@ -146,7 +148,7 @@ const ChipsComponent = ({ chips, onRemove }) => {
 							key // Map over object keys
 						) => (
 							<Chip
-								className='p-button-sm'
+								className='p-button-sm mr-1'
 								key={index + key}
 								template={() => com(key)}
 							/> // Use index + key as the unique key
@@ -167,7 +169,6 @@ const handleDownloadOpenSeaComTemplate = async (
 		const selectedProperties = Object.keys(dataOpensea[0])
 
 		const allProperties = [...selectedProperties]
-		console.log('🚀 ~ file: OpenSeaCom.jsx:170 ~ allProperties:', allProperties)
 
 		if (allProperties.length === 0) {
 			toast.info('No headers selected')
@@ -192,10 +193,8 @@ const handleDownloadOpenSeaComTemplate = async (
 			expectedHeaders &&
 			JSON.stringify(Object.keys(metadataSchema).sort()) ===
 				JSON.stringify(Object.keys(expectedHeaders).sort())
+
 		const data = {
-			metadataTab: {
-				csvUpload: test || false,
-			},
 			NftOnIpfsUpload: test ? project?.NftOnIpfsUpload : 0,
 			isUploadedToIPFS: test ? project?.isUploadedToIPFS : false,
 			configurationTab: test ? project?.configurationTab : {},
@@ -203,9 +202,8 @@ const handleDownloadOpenSeaComTemplate = async (
 			metadataSchema,
 		}
 
-
 		const response = await ApiService.put(`/project/${project._id}`, {
-			metadataSchema,
+			...data,
 		})
 
 		// Check the response status to confirm that the update was successful
@@ -213,6 +211,7 @@ const handleDownloadOpenSeaComTemplate = async (
 			toast.success('Metadata schema updated successfully')
 		} else {
 			toast.error('Failed to update metadata schema')
+			return
 		}
 
 		// Create a Blob with the CSV content
@@ -232,10 +231,6 @@ const handleDownloadOpenSeaComTemplate = async (
 		}, 100)
 		return data
 	} catch (error) {
-		console.log(
-			'🚀 ~ file: OpenSeaCom.jsx:224 ~ handleDownloadOpenSeaComTemplate ~ error.message:',
-			error.message
-		)
 		toast.error('An error occurred:', error)
 	}
 }
