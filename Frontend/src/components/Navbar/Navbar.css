@@ -1,3 +1,8 @@
+.navbar {
+	background-color: #fff;
+	border-bottom: solid 1px #e6e6e6 !important;
+}
+
 .navbar .navbar-header {
 	display: flex;
 	align-items: center;
@@ -150,6 +155,10 @@
 	width: 100% !important;
 }
 
+.navbar-border {
+	border-color: #e6e6e6 !important;
+}
+
 @media screen and (max-width: 991px) {
 	.navbar .navbar-menu .navbar-nav .nav-button {
 		/* margin-left: 45px !important; */
@@ -179,10 +188,12 @@
 		height: auto;
 		display: block;
 		padding: 10px 49px;
-		/* background: #f5f7ff !important; */
-		top: 70px;
+		background: #ffffff !important;
+		top: 55px;
 		z-index: 999;
 		left: 54%;
+		border-top: solid 1px rgb(225, 225, 225);
+		/* border-bottom: solid 1px rgb(215, 215, 215); */
 		transform: translateX(-54%);
 	}
 
