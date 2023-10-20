@@ -11,6 +11,7 @@ import Api from '../../../services/Api'
 import Abi from '../../../assets/ABIs/EthGlobalABI.json'
 import initializeProvider from '../../../services/provider'
 import { InputNumber } from 'primereact/inputnumber'
+import { ethers } from 'ethers'
 
 const options = [
 	{ name: 'name' },
@@ -72,18 +73,29 @@ function index({ project }) {
 		})
 
 		try {
-			const postData = await Api.post('/user/pre_mint', {
-				csvData: addresses,
-				contractAddress: project.contractAddress,
-				id: project._id,
-			})
+			const provider = new ethers.BrowserProvider(window.ethereum)
+			const signer = await provider.getSigner()
 
-			console.log(postData)
-			if (postData.data.success) {
-				toast.success('NFTs Minted Successfully!')
-				setIsMinting(false)
-				setTableData([])
-			}
+			const contract = new ethers.Contract(
+				project.contractAddress,
+				project.abi,
+				signer
+			)
+			const result = await contract['batchMint'](addresses)
+			console.log(result)
+
+			// const postData = await Api.post('/user/pre_mint', {
+			// 	csvData: addresses,
+			// 	contractAddress: project.contractAddress,
+			// 	id: project._id,
+			// })
+
+			// console.log(postData)
+			// if (postData.data.success) {
+			// 	toast.success('NFTs Minted Successfully!')
+			// 	setIsMinting(false)
+			// 	setTableData([])
+			// }
 		} catch (error) {
 			console.log(error, 'error')
 		}
