@@ -1,7 +1,7 @@
 import { ethers } from 'ethers'
 import Api from '../../services/Api'
-import { useState } from 'react'
 import { useWallet } from '../../services/context/WalletContext'
+import { useToast } from '../ToastContext'
 
 let signer
 let provider
@@ -9,6 +9,7 @@ let walletAddress
 
 const useMetaConnector = () => {
 	const { setWalletAddress } = useWallet()
+	const toast = useToast()
 
 	const connectToMeta = async () => {
 		if (window.ethereum) {
@@ -22,6 +23,9 @@ const useMetaConnector = () => {
 						params: [{ chainId: '0x1389' }],
 					})
 				} catch (switchError) {
+					if (switchError.code === 4001) {
+						return toast.error('Switch to Mantle Testnet')
+					}
 					if (switchError.code === 4902) {
 						try {
 							await window.ethereum.request({
@@ -47,6 +51,7 @@ const useMetaConnector = () => {
 				}
 			}
 
+			console.log('hello')
 			provider = new ethers.BrowserProvider(window.ethereum)
 			signer = await provider.getSigner()
 
@@ -63,6 +68,8 @@ const useMetaConnector = () => {
 					console.log(error)
 				}
 			}
+		} else {
+			toast.info('Please install Metamask')
 		}
 	}
 
@@ -82,6 +89,8 @@ const useMetaConnector = () => {
 			signature: signature,
 			userAddress: userAddress,
 		})
+
+		console.log(res)
 
 		if (res.data.allowed) {
 			setWalletAddress(walletAddress.toLowerCase())

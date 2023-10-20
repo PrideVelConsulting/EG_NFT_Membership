@@ -10,6 +10,8 @@ import Api from '../../services/Api'
 import { useToast } from '../../components/ToastContext'
 import { useWallet } from '../../services/context/WalletContext'
 import { CopyToClipboard } from 'react-copy-to-clipboard'
+import useMetaConnector from '../../components/MetamaskLogin'
+import initializeProvider from '../../services/provider'
 
 const Dashboard = () => {
 	const [value, setValue] = useState('')
@@ -19,6 +21,7 @@ const Dashboard = () => {
 	const [deleteDialog, setDeleteDialog] = useState(false)
 	const [objectId, setObjectId] = useState('')
 	const [dialogValidation, setDialogValidation] = useState(false)
+	const { connectToMeta } = useMetaConnector()
 
 	const location = useLocation()
 
@@ -29,6 +32,18 @@ const Dashboard = () => {
 		const getData = async () => {
 			const data = await Api.get('/project')
 
+			// filtering projects based on userAddress
+			// const collectionArray = []
+			// if (userAddress) {
+			//   data.data.map(item => {
+			//     console.log(item, item.userAddress, "outside if")
+			//     if (item?.userAddress == userAddress && item.userAddress) {
+			//       console.log(item, item.userAddress, "inside if")
+			//       collectionArray.push(item)
+			//     }
+			//   })
+			// }
+
 			setCollectionData(data.data)
 		}
 
@@ -38,16 +53,19 @@ const Dashboard = () => {
 	const handleVerifyContract = async (data) => {
 		const contractAddress = data?.contractAddress
 
+		// Validate contractAddress
 		if (!contractAddress) {
 			toast.error('Contract address is missing.')
 			return
 		}
 
+		// Set the 'verifying' state to true to indicate that the verification is in progress
 		try {
 			const res = await Api.post('user/verify_contract', {
 				ContractAddress: contractAddress,
 			})
 
+			// Validate the response from the API call
 			if (res.status === 201 && res.data) {
 				toast.success('Smart contract verified successfully!')
 				console.log('Smart contract verified successfully:', res.data)
@@ -72,7 +90,7 @@ const Dashboard = () => {
 			setDeleteDialog(false)
 			setCollectionData((prev) => {
 				return prev.filter((item) => {
-					return item._id !== objectId
+					return item._id !== objectId // Use 'return' here
 				})
 			})
 		}
@@ -106,6 +124,8 @@ const Dashboard = () => {
 	const RenderCard = ({ item }) => {
 		const [symbol, setSymbol] = useState('')
 		const [name, setName] = useState('')
+		const [totalSupply, setTotalSupply] = useState('')
+		const [maxSupply, setMaxSupply] = useState(0)
 		const [verify, setVerifying] = useState(false)
 
 		const handleVerifyState = async () => {
@@ -114,19 +134,43 @@ const Dashboard = () => {
 			setVerifying(false)
 		}
 
+		// code for fetching details from contract
+		useEffect(() => {
+			const fetchContractData = async () => {
+				if (item.isDeployed) {
+					const { contractAddress, abi } = item
+
+					const contract = initializeProvider(contractAddress, abi)
+					const fetchedSymbol = await contract['symbol']()
+					const fetchedName = await contract['name']()
+					const fetchTotalSupply = await contract['totalSupply']()
+					const fetchMaxSupply = await contract['CollectionMaxSupply']()
+					console.log(fetchMaxSupply.toString())
+
+					setSymbol(fetchedSymbol)
+					setName(fetchedName)
+					setTotalSupply(fetchTotalSupply.toString())
+					setMaxSupply(fetchMaxSupply.toString())
+				}
+			}
+
+			fetchContractData()
+		}, [item])
+
 		return (
 			item.isDeployed && (
 				<div className='lg:col-3 md:col-4 sm:col-6 col-12 flex'>
 					<div className='text-center bg-white border-1 panel-color-border border-round w-full px-5 pb-4'>
 						<h3 className='text-center text-xl'>{item.projectName}</h3>
-						<div className='flex align-items-center justify-content-center gap-1 mb-4'>
-							<div className='card-text-color font-semibold text-lg'>
-								ERC 721
+						<div className='mb-3'>
+							<div className='font-normal text-md flex align-items-center justify-content-center gap-1'>
+								<div>Testnet</div>
+								<div>|</div>
+								<div className='card-text-color '>ERC 721</div>
 							</div>
 
-							<div className='flex align-items-center justify-content-center gap-1'>
-								<div> | </div>
-								<div>
+							<div className='flex align-items-center justify-content-center gap-1 mt-1'>
+								<div className='text-sm'>
 									<a
 										href={`https://explorer.testnet.mantle.xyz/address/${item?.contractAddress}`}
 										target='_blank' // This opens the link in a new tab
@@ -147,23 +191,57 @@ const Dashboard = () => {
 								</div>
 							</div>
 						</div>
-						<div className='mt-6'>
+						<div className='mt-3'>
 							<div className='flex align-items-center justify-content-between'>
 								<div className='text-center'>
-									<p className='m-0 font-semibold text-lg'>Name </p>
-									<p className='m-0 card-text-color'>Status</p>
+									<p className='m-0' style={{ fontWeight: '500' }}>
+										Name{' '}
+									</p>
+									<p
+										className='m-0 text-md text-500'
+										style={{ fontWeight: '400' }}
+									>
+										{name}
+									</p>
 								</div>
 								<div className='text-center'>
-									<p className='m-0 font-semibold text-lg'>Symbol</p>
-									<p className='m-0 card-text-color'>Minted</p>
+									<p className='m-0' style={{ fontWeight: '500' }}>
+										Symbol
+									</p>
+									<p
+										className='m-0 text-md text-500'
+										style={{ fontWeight: '400' }}
+									>
+										{symbol}
+									</p>
 								</div>
 							</div>
-							<div className='mt-6'>
-								<p className='m-0 font-semibold text-lg'>Total Supply</p>
-								<p className='m-0 card-text-color'>Minting Price</p>
+							<div className='mt-3 flex align-items-center justify-content-between'>
+								<div>
+									<p className='m-0' style={{ fontWeight: '500' }}>
+										Total Supply
+									</p>
+									<p
+										className='m-0 text-md text-500'
+										style={{ fontWeight: '400' }}
+									>
+										{totalSupply}
+									</p>
+								</div>
+								<div>
+									<p className='m-0' style={{ fontWeight: '500' }}>
+										Max Supply
+									</p>
+									<p
+										className='m-0 text-md text-500'
+										style={{ fontWeight: '400' }}
+									>
+										{maxSupply}
+									</p>
+								</div>
 							</div>
 						</div>
-						<div className='mt-5 flex align-items-center justify-content-center'>
+						<div className='mt-3 flex align-items-center justify-content-center'>
 							<Link to={`/manage/${item._id}-${item.projectName}`}>
 								<Button
 									label='Manage'
@@ -180,7 +258,6 @@ const Dashboard = () => {
 	}
 
 	const RenderCards = () => {
-		console.log(collectionData.length)
 		return (
 			<>
 				{collectionData.map((item, index) => (
@@ -198,7 +275,7 @@ const Dashboard = () => {
 				<div className='container mt-4 cursor-pointer'>
 					<div className='flex align-items-center justify-content-between'>
 						<div>
-							<h2>Deployed</h2>
+							<h2>Projects</h2>
 						</div>
 						<div>
 							<Button
@@ -213,21 +290,35 @@ const Dashboard = () => {
 							<RenderCards />
 						</div>
 					) : (
-						<div className='flex justify-content-center mt-8'>
-							<div className='w-6 bg-white p-6 text-center border-round'>
+						<div className='flex justify-content-center mt-8 pt-8'>
+							<div className='lg:w-6 bg-white lg:p-6 text-center border-round'>
 								<h3>
-									No Project Available. Create{' '}
-									<a onClick={() => setNewProject(true)}>New Project</a>
+									NO project avaiable Click on
+									<a
+										className='cursor-pointer'
+										onClick={() => setNewProject(true)}
+									>
+										{' '}
+										New Project
+									</a>
 								</h3>
 							</div>
 						</div>
 					)}
 				</div>
 			) : (
-				<div className='container mt-8 mb-8 pb-8'>
-					<div className='flex justify-content-center mt-8'>
-						<div className='w-6 surface-100 p-6 text-center border-round'>
-							<h3>Wallet Connection Required</h3>
+				<div className='container mt-8'>
+					<div className='flex justify-content-center mt-8 pt-8'>
+						<div className='lg:w-6 bg-white p-6 text-center border-round'>
+							<h3>
+								Wallet connection required.{' '}
+								<a
+									onClick={() => connectToMeta()}
+									style={{ cursor: 'pointer' }}
+								>
+									Click Connect
+								</a>
+							</h3>
 						</div>
 					</div>
 				</div>
