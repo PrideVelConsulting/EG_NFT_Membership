@@ -4,6 +4,8 @@ var bodyParser = require('body-parser')
 var jsonParser = bodyParser.json()
 var user = require('../controllers/user.controller')
 const path = require('path')
+var smartContract = require('../controllers/smartContract.controller')
+
 
 router.post('/check_user', jsonParser, user.checkUser)
 router.post('/wallet_auth', jsonParser, user.handleAuth)

@@ -2,35 +2,44 @@ const exec = require('child_process').exec
 const path = require('path')
 const fs = require('fs')
 const os = require('os')
+const Project = require('../Models/project.model')
 
 var currentPath = process.cwd()
 const execDir = path.join(currentPath, './', 'HARDHAT')
 const envFilePAth = path.join(currentPath, './', 'HARDHAT', '.env')
 const ENV_VARS = fs.readFileSync(envFilePAth, 'utf-8').split(os.EOL)
+const argumentExe = path.join(execDir, '/argument1.jsx')
+const directoryPath = path.join(execDir, 'contracts')
+
+const addAbiToDB = async (abi, projectId) => {
+	try {
+		const updatedProject = await Project.findByIdAndUpdate(
+			projectId,
+			{ $set: { abi: abi } },
+			{ new: true }
+		)
+
+		if (updatedProject) {
+			console.log('ABI updated successfully')
+		} else {
+			console.log('Project not found or update failed')
+		}
+	} catch (error) {
+		console.error('Error updating ABI:', error)
+	}
+}
 
 async function deploysmartContract(req, res) {
-	const {
-		projectName,
-		projectId,
-		tokenName,
-		tokenSymbol,
-		ipfsHashContract,
-		ownerAddress,
-		maxCollectionSize,
-	} = req.body
 	try {
-		let data = `module.exports = [
-            ${tokenName},
-           ${tokenSymbol},
-           ${ipfsHashContract},
-           ${ownerAddress},
-           ${maxCollectionSize},]
-           `
+		const { SmartContractCode, projectName, projectId } = req.body
+		const createSmartContractFile = async (projectId, SmartContractCode) => {
+			const FileName = `${projectId}.sol`
+			const FilePath = path.join(directoryPath, FileName)
+			fs.writeFileSync(FilePath, SmartContractCode)
+			console.log('The file is saved at:', FilePath)
+			setEnvContractName('PROJECT_NAME', projectName)
+		}
 
-		fs.writeFileSync('argument1.jsx', data, 'UTF-8', { flags: 'w+' }, (err) => {
-			if (err) throw err
-			console.log('File Updated!')
-		})
 		// find the Project Name in ENV file and replace it with the current project
 		const setEnvContractName = async (key, value) => {
 			// find the env we want based on the key
@@ -81,6 +90,14 @@ async function deploysmartContract(req, res) {
 		}
 
 		const deploySmartContract = async () => {
+			const abiFilePath = path.join(
+				currentPath,
+				'HARDHAT',
+				'artifacts',
+				'contracts',
+				`${projectId}.sol`,
+				`${projectName}.json`
+			)
 			try {
 				await exec(
 					`npx hardhat run ./scripts/deploy-script.js --network mantleTestnet`,
@@ -92,16 +109,17 @@ async function deploysmartContract(req, res) {
 						} else {
 							console.log('chk3')
 							console.log(stdout, 'address')
-							// const data = fs.readFileSync(abiFilePath, 'utf-8')
+							const data = fs.readFileSync(abiFilePath, 'utf-8')
+							const jsonData = JSON.parse(data)
 
-							// const jsonData = JSON.parse(data)
-							// const abi = jsonData.abi
+							const abi = jsonData.abi
 
-							// addAbiToDB(abi, projectId)
+							addAbiToDB(abi, projectId)
 
-							// res.json({ msg: `Contract Deployed` })
-							// res.status(200).json(`Contract Deployed`)
-							// res.status(201).json(`${stdout.trim()}`)
+							res.status(200).json({
+								message: 'Contract Deployed',
+								contractAddress: stdout.trim(),
+							})
 						}
 					}
 				)
@@ -111,12 +129,11 @@ async function deploysmartContract(req, res) {
 		}
 
 		// function start from here
-		setEnvContractName('PROJECT_NAME', projectName)
+		createSmartContractFile(projectId, SmartContractCode)
+		// res.status(201).json(`Contract deployed successfully!`)
 	} catch (error) {
 		res.status(400).json({ error: error.message })
 	}
-
-	res.status(201).json(`Contract Deployed`)
 }
 
 const verifySmartContract = async (req, res) => {
