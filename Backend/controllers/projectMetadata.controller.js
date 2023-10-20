@@ -6,22 +6,32 @@ const fs = require('fs')
 const path = require('path')
 const archiver = require('archiver')
 
+async function createProjectMetadata(req, res) {
+	try {
+		const project = new ProjectMetadata(req.body)
+		const savedProjectMetadata = await project.save()
+		res.status(201).json(savedProjectMetadata)
+	} catch (error) {
+		res.status(400).json({ error: error.message })
+	}
+}
+
 async function addCSVProject(req, res) {
 	try {
 		const projectId = req.csvData[0]?.projectId
 		await ProjectMetadata.deleteMany({ projectId })
-		const mantlePrefixes = [
-			'props_',
-			'propn_',
-			'propb_',
-			'propu_',
-			'proph_',
+		const openseaPrefixes = [
+			'attrbn_',
+			'attrbp_',
+			'attrn_',
+			'attrr_',
+			'attrd_',
 			'serialNo',
 		]
 		const dataToSave = req.csvData.map((entry) => {
 			// Iterate over the keys (columns) in each entry
 			for (const key in entry) {
-				if (mantlePrefixes.some((prefix) => key.startsWith(prefix))) {
+				if (openseaPrefixes.some((prefix) => key.startsWith(prefix))) {
 					// Convert the value associated with the key to a number
 					entry[key] = parseInt(entry[key])
 				}
@@ -35,10 +45,70 @@ async function addCSVProject(req, res) {
 	}
 }
 
+async function createMulProjectMetadata(req, res) {
+	try {
+		const data = req.body //[{},{},{}] = data structure
+		const savedProjectMetadata = await ProjectMetadata.insertMany(data)
+		res.status(201).json(savedProjectMetadata)
+	} catch (error) {
+		res.status(400).json({ error: error.message })
+	}
+}
+
 async function getProjectMetadatas(req, res) {
 	try {
 		const projects = await ProjectMetadata.find()
 		res.json(projects)
+	} catch (error) {
+		res.status(500).json({ error: 'An error occurred.' })
+	}
+}
+
+async function updateProjectMetadata(req, res) {
+	try {
+		const updatedProjectMetadata = await ProjectMetadata.findByIdAndUpdate(
+			req.params.id,
+			req.body,
+			{
+				new: true, // Return the updated project after update
+			}
+		)
+
+		if (!updatedProjectMetadata) {
+			return res.status(404).json({ error: 'ProjectMetadata not found.' })
+		}
+
+		res.json(updatedProjectMetadata)
+	} catch (error) {
+		res.status(400).json({ error: error.message })
+	}
+}
+
+async function deleteProjectMetadata(req, res) {
+	try {
+		const deletedProjectMetadata = await ProjectMetadata.findByIdAndDelete(
+			req.params.id
+		)
+
+		if (!deletedProjectMetadata) {
+			return res.status(404).json({ error: 'ProjectMetadata not found.' })
+		}
+
+		res.json({ message: 'ProjectMetadata deleted successfully.' })
+	} catch (error) {
+		res.status(500).json({ error: 'An error occurred.' })
+	}
+}
+
+async function getProjectMetadataById(req, res) {
+	try {
+		const project = await ProjectMetadata.findById(req.params.id)
+
+		if (!project) {
+			return res.status(404).json({ error: 'ProjectMetadata not found.' })
+		}
+
+		res.json(project)
 	} catch (error) {
 		res.status(500).json({ error: 'An error occurred.' })
 	}
@@ -137,11 +207,42 @@ async function getProjectMetadata(req, res) {
 	}
 }
 
+async function downloadcontract(req, res) {
+	const directoryPath = path.join(process.cwd(), 'HARDHAT', 'contracts')
+	fs.readdir(directoryPath, (err, files) => {
+		if (err) {
+			return res.status(500).send(err)
+		}
+
+		files.sort((a, b) => {
+			return (
+				fs.statSync(path.join(directoryPath, b)).mtime.getTime() -
+				fs.statSync(path.join(directoryPath, a)).mtime.getTime()
+			)
+		})
+
+		const latestFile = files[0]
+
+		const filePath = path.join(directoryPath, latestFile)
+
+		// Set the content-disposition header with the filename
+		res.setHeader('Content-Disposition', `attachment; filename="${latestFile}"`)
+
+		res.download(filePath) // Download the latest contract file
+	})
+}
+
 module.exports = {
+	createProjectMetadata,
 	getProjectMetadatas,
+	updateProjectMetadata,
+	deleteProjectMetadata,
+	getProjectMetadataById,
+	createMulProjectMetadata,
 	addCSVProject,
 	fetchAndSerialize,
 	handleIPFSRes,
 	generateAndSendZip,
 	getProjectMetadata,
+	downloadcontract,
 }
