@@ -1,15 +1,17 @@
 const dotenv = require('dotenv')
-const express = require('express')
-const mongoose = require('mongoose')
-const cors = require('cors')
 const session = require('express-session')
-
 dotenv.config()
 
+const express = require('express')
 const app = express()
 const PORT = process.env.PORT || 8301
+const mongoose = require('mongoose')
 const connect = mongoose.connect
 const connection = mongoose.connection
+const router = require('./routes/index.js')
+
+const cors = require('cors')
+const { Db } = require('mongodb')
 
 app.use(
 	cors({
@@ -20,7 +22,6 @@ app.use(
 app.use(express.json())
 
 const DB = require('./db.js').DB
-const router = require('./routes/index.js')
 
 connect(DB, {
 	useNewUrlParser: true,
@@ -46,7 +47,7 @@ app.listen(PORT, function () {
 app.use(
 	session({
 		name: 'nft_session',
-		secret: process.env.SESSION_SECRET,
+		secret: 'secret',
 		resave: true,
 		saveUninitialized: true,
 		cookie: {

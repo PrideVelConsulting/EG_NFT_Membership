@@ -11,8 +11,9 @@ const projectSchema = new Schema(
 		},
 		serialNo: {
 			type: Number,
-			required: true,
+			required: true, // This makes the serialNo field compulsory
 		},
+		// dynamicData: Schema.Types.Mixed, // Store dynamic properties here
 	},
 	{ strict: false }
 )
