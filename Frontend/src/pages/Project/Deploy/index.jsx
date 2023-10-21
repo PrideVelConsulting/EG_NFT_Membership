@@ -140,11 +140,12 @@ function index({ project }) {
 			console.log('Contract Deploying')
 			if (walletAddress !== null) {
 				if (
-					(code !== undefined,
-					userData.Name != undefined,
-					userData.Symbol !== undefined,
-					userData.ipfsHash !== undefined,
-					userData.CollectionSize !== undefined,
+					(code !== undefined &&
+					userData.Name != undefined &&
+					userData.Name.length > 0 &&
+					userData.Symbol !== undefined &&
+					userData.ipfsHash !== undefined &&
+					userData.CollectionSize !== undefined &&
 					walletAddress !== null)
 				) {
 					setLoading(true)

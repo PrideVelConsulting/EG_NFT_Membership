@@ -12,6 +12,8 @@ import Abi from '../../../assets/ABIs/EthGlobalABI.json'
 import initializeProvider from '../../../services/provider'
 import { InputNumber } from 'primereact/inputnumber'
 import { ethers } from 'ethers'
+import { useNavigate } from 'react-router-dom'
+
 
 const options = [
 	{ name: 'name' },
@@ -28,7 +30,12 @@ function index({ project }) {
 	const [totalSupply, setTotalSupply] = useState(0)
 	const [isMinting, setIsMinting] = useState(false)
 	const [noOfNft, setNoOfNft] = useState(0)
+	const [visible, setVisible] = useState(false)
+	const navigate = useNavigate()
 
+	const accept = () => {
+		return navigate('/dashboard')
+	}
 	const contract = initializeProvider(project.contractAddress, project.abi)
 
 	useEffect(() => {
@@ -81,9 +88,12 @@ function index({ project }) {
 				project.abi,
 				signer
 			)
+			console.log(addresses)
 			const result = await contract['batchMint'](addresses)
 			console.log(result)
-
+				await result.wait()
+				setIsMinting(false)
+				setVisible(true);
 			// const postData = await Api.post('/user/pre_mint', {
 			// 	csvData: addresses,
 			// 	contractAddress: project.contractAddress,
@@ -93,7 +103,6 @@ function index({ project }) {
 			// console.log(postData)
 			// if (postData.data.success) {
 			// 	toast.success('NFTs Minted Successfully!')
-			// 	setIsMinting(false)
 			// 	setTableData([])
 			// }
 		} catch (error) {
@@ -188,6 +197,15 @@ function index({ project }) {
 						<p>{issue}</p>
 					</div>
 				))}
+			</GenericDialog>
+			<GenericDialog
+				visible={visible}
+				onHide={() => accept()}
+				header='Success'
+				onSubmit={() => accept()}
+				saveButtonTitle='Okay'
+			>
+				NFT Membership minted successfully to all provided addresses
 			</GenericDialog>
 		</>
 	)
